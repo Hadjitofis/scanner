@@ -9,11 +9,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write # Needed to upload to GHCR
+      packages: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      # This step converts your repo name to lowercase and saves it as an environment variable
+      - name: Lowercase Repo Name
+        run: |
+          echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -27,11 +32,11 @@ jobs:
         with:
           context: .
           push: true
-          # This saves the image to your GitHub profile
-          tags: ghcr.io/${{ github.repository }}:latest
+          # We use the new lowercase variable here instead
+          tags: ghcr.io/${{ env.IMAGE_NAME }}:latest
 
       - name: Docker Scout Scan
         uses: docker/scout-action@v1
         with:
           command: quickview, cves
-          image: ghcr.io/${{ github.repository }}:latest
+          image: ghcr.io/${{ env.IMAGE_NAME }}:latest
